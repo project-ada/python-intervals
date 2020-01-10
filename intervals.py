@@ -1321,14 +1321,14 @@ class IntervalDict(MutableMapping):
     def combine_list(others, how):
         """
         Return a new IntervalDict that combines the values from current and
-        provided ones.
+        provided list of others.
 
         If d = d1.combine(d2, f), then d contains (1) all values from d1 whose
         keys do not intersect the ones of d2, (2) all values from d2 whose keys
         do not intersect the ones of d1, and (3) f(x, y) for x in d1, y in d2 for
         intersecting keys.
 
-        :param other: another IntervalDict instance.
+        :param others: list of IntervalDict instances.
         :param how: a function of two parameters that combines values.
         :return: a new IntervalDict instance.
         """
