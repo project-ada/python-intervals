@@ -1333,8 +1333,6 @@ class IntervalDict(MutableMapping):
         :return: a new IntervalDict instance.
         """
 
-        do_combine = staticmethod(IntervalDict.combine).__func__
-
         count = len(others)
 
         if count == 1:
@@ -1343,7 +1341,7 @@ class IntervalDict(MutableMapping):
         if count == 0:
             return IntervalDict()
 
-        return do_combine(IntervalDict.combine_list(others[:int(count/2)], how), IntervalDict.combine_list(others[int(count/2):], how), how)
+        return IntervalDict.combine(IntervalDict.combine_list(others[:int(count/2)], how), IntervalDict.combine_list(others[int(count/2):], how), how)
 
     def __setitem__(self, key, value):
         interval = key if isinstance(key, Interval) else singleton(key)
