@@ -1001,6 +1001,13 @@ def test_intervaldict_combine_list():
 
 
     from time import time
+
+    start = time()
+    fast_result = I.IntervalDict.combine_list(test_intervals, add)
+    end = time()
+
+    fast_time = end-start
+
     start = time()
 
     slow_result = I.IntervalDict()
@@ -1013,12 +1020,15 @@ def test_intervaldict_combine_list():
     slow_time = end-start
 
     start = time()
-    fast_result = I.IntervalDict.combine_list(test_intervals, add)
+    shorter_result = I.IntervalDict.combine_list2(test_intervals, add)
     end = time()
+    shorter_time = end-start
 
-    fast_time = end-start
-
-    assert I.IntervalDict.combine_list(test_intervals, add) == slow_result
+#    print(slow_time)
+    print("Recurse with combine: {}".format(fast_time))
+    print("Recurse with smart_combine: {}".format(shorter_time))
+    print("slow: {}".format(slow_time))
+    assert I.IntervalDict.combine_list2(test_intervals, add) == slow_result
 
 
 def test_intervaldict_other_methods():

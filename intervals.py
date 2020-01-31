@@ -1284,6 +1284,79 @@ class IntervalDict(MutableMapping):
                     return v
             raise KeyError(key)
 
+
+    def smart_combine(self, other, how):
+        """
+        Return a new IntervalDict that combines the values from current and
+        provided ones.
+
+        If d = d1.combine(d2, f), then d contains (1) all values from d1 whose
+        keys do not intersect the ones of d2, (2) all values from d2 whose keys
+        do not intersect the ones of d1, and (3) f(x, y) for x in d1, y in d2 for
+        intersecting keys.
+
+        :param other: another IntervalDict instance.
+        :param how: a function of two parameters that combines values.
+        :return: a new IntervalDict instance.
+        """
+        new_items = []
+
+        dom1, dom2 = self.domain(), other.domain()
+
+        new_items.extend(self[dom1 - dom2].items())
+        new_items.extend(other[dom2 - dom1].items())
+
+        intersection = dom1 & dom2
+        d1, d2 = self[intersection], other[intersection]
+
+
+        counter1 = 0
+        counter2 = 0
+        list1 = d1.items()
+        list2 = d2.items()
+        l1_len = len(list1)
+        l2_len = len(list2)
+        while counter1 < l1_len and counter2 < l2_len:
+            overlapped = False
+            i1, v1 = list1[counter1]
+            i2, v2 = list2[counter2]
+            if i1.lower <= i2.lower:
+                clockwise = True
+                counter1 = counter1 + 1
+            else:
+                clockwise = False
+                counter2 = counter2 + 1
+            if clockwise:
+                if i1.upper < i2.lower:
+                    continue
+                iterator = counter2
+                while (not overlapped or i1.upper >= i2.lower) and iterator < l2_len:
+                    i2, v2 = list2[iterator]
+                    if i1.overlaps(i2):
+                        overlapped = True
+                        i = i1 & i2
+                        v = how(v1, v2)
+                        new_items.append((i, v))
+                    elif overlapped and i1.upper < i2.lower:
+                        continue
+                    iterator = iterator + 1
+            else:
+                if i2.upper < i1.lower:
+                    continue
+                iterator = counter1
+                while (not overlapped or i2.upper >= i1.lower) and iterator < l1_len:
+                    i1, v1 = list1[iterator]
+                    if i2.overlaps(i1):
+                        overlapped = True
+                        i = i2 & i1
+                        v = how(v2, v1)
+                        new_items.append((i, v))
+                    elif overlapped and i2.upper < i1.lower:
+                        continue
+                    iterator = iterator + 1
+        return IntervalDict(new_items)
+
+
     def combine(self, other, how):
         """
         Return a new IntervalDict that combines the values from current and
@@ -1317,6 +1390,7 @@ class IntervalDict(MutableMapping):
 
         return IntervalDict(new_items)
 
+
     @staticmethod
     def combine_list(others, how):
         """
@@ -1342,6 +1416,33 @@ class IntervalDict(MutableMapping):
             return IntervalDict()
 
         return IntervalDict.combine(IntervalDict.combine_list(others[:int(count/2)], how), IntervalDict.combine_list(others[int(count/2):], how), how)
+
+    @staticmethod
+    def combine_list2(others, how):
+        """
+        Return a new IntervalDict that combines the values from current and
+        provided list of others.
+
+        If d = d1.combine(d2, f), then d contains (1) all values from d1 whose
+        keys do not intersect the ones of d2, (2) all values from d2 whose keys
+        do not intersect the ones of d1, and (3) f(x, y) for x in d1, y in d2 for
+        intersecting keys.
+
+        :param others: list of IntervalDict instances.
+        :param how: a function of two parameters that combines values.
+        :return: a new IntervalDict instance.
+        """
+
+        count = len(others)
+
+        if count == 1:
+            return others[0]
+
+        if count == 0:
+            return IntervalDict()
+
+        return IntervalDict.smart_combine(IntervalDict.combine_list2(others[:int(count/2)], how), IntervalDict.combine_list2(others[int(count/2):], how), how)
+
 
     def __setitem__(self, key, value):
         interval = key if isinstance(key, Interval) else singleton(key)
